@@ -225,8 +225,9 @@ end
 M.setup = function(opts)
   config = vim.tbl_extend("force", config, opts or {})
 
-  vim.api.nvim_create_autocmd("User", {
-      pattern = "LazyDone",
+  local has_lazy = vim.fn.exists("#User#LazyDone") == 1
+  vim.api.nvim_create_autocmd(has_lazy and "User" or "VimEnter", {
+      pattern = has_lazy and "LazyDone" or nil,
       once = true,
       callback = function()
           if config.user_colorSchemes and not vim.tbl_isempty(config.user_colorSchemes) then

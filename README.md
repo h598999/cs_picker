@@ -1,0 +1,123 @@
+# 🌈 Colorscheme Picker for Neovim
+
+A simple and fast colorscheme picker for Neovim using [Telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).
+Supports live preview, persistent scheme saving, and toggling between favorite schemes.
+
+---
+
+## ✨ Features
+
+- 🖼️ Telescope-powered fuzzy colorscheme picker
+- 🔄 Toggle through your configured
+- 💾 Remembers last used scheme across sessions
+- 💤 Lazy-loading compatible
+
+---
+
+## 📦 Installation
+
+### [Lazy.nvim](https://github.com/folke/lazy.nvim)
+
+```lua
+{
+  "yourgithub/colorscheme-picker.nvim",
+  dependencies = { "nvim-telescope/telescope.nvim" },
+  event = "VeryLazy",
+  config = function()
+    require("colorscheme_picker").setup({
+      -- Optional: specify preferred schemes
+      user_colorSchemes = {
+        tokyonight = { "night", "storm" },
+        catppuccin = { "mocha", "macchiato" },
+        gruvbox = {},
+      },
+    })
+  end,
+}
+```
+
+### Packer
+
+```lua
+use {
+  "yourgithub/colorscheme-picker.nvim",
+  requires = { "nvim-telescope/telescope.nvim" },
+  config = function()
+    require("colorscheme_picker").setup()
+  end
+}
+```
+
+---
+
+## ⚡ Usage
+
+You can use the built-in keymaps, commands, or define your own.
+
+### Suggested keymaps:
+
+```lua
+vim.keymap.set("n", "<leader>fs", require("colorscheme_picker").pick_colorscheme, { desc = "Pick colorscheme" })
+vim.keymap.set("n", "<leader>cs", require("colorscheme_picker").toggle_next, { desc = "Toggle colorscheme" })
+```
+
+### Available commands:
+
+| Command               | Description                          |
+|-----------------------|--------------------------------------|
+| `:PickColorscheme`    | Open the fuzzy picker                |
+| `:ToggleColorscheme`  | Cycle to the next configured scheme  |
+
+---
+
+## 🔧 Options
+
+You can pass the following options to `setup()`:
+
+| Option              | Type    | Description                                                |
+|---------------------|---------|------------------------------------------------------------|
+| `user_colorSchemes` | table   | A map of preferred base → variants                        |
+| `scheme_file`       | string  | Where to store the selected scheme (default: Neovim cache) |
+| `fallback`          | string  | Fallback scheme if saved one is not found                 |
+
+---
+
+## 📂 Example of `user_colorSchemes`
+
+```lua
+user_colorSchemes = {
+  tokyonight = { "storm", "night" }, -- will match e.g. "tokyonight-night"
+  gruvbox = {},
+  catppuccin = { "mocha" }, -- match "catppuccin-mocha"
+}
+```
+
+---
+
+## 🧠 How It Works
+
+- On startup, reads the last used colorscheme from `scheme_file`
+- Loads all installed colorschemes after `LazyDone`
+- If `user_colorSchemes` is provided, filters to best matches
+- `:ToggleColorscheme` rotates through this list
+- `:PickColorscheme` opens a live preview Telescope picker
+
+---
+
+## ✅ Requirements
+
+- Neovim ≥ 0.7
+- [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
+
+---
+
+## 📃 License
+
+MIT
+
+---
+
+## ✨ Inspired by
+
+- [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
+
