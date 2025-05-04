@@ -8,7 +8,7 @@ Supports live preview, persistent scheme saving, and toggling between favorite s
 ## ✨ Features
 
 - 🖼️ Telescope-powered fuzzy colorscheme picker
-- 🔄 Toggle through your configured
+- 🔄 Toggle through your configured colorschemes
 - 💾 Remembers last used scheme across sessions
 - 💤 Lazy-loading compatible
 
@@ -28,6 +28,7 @@ Supports live preview, persistent scheme saving, and toggling between favorite s
       -- Optional: specify preferred schemes
       user_colorSchemes = {
         tokyonight = { "night", "storm" },
+        ["rose-pine"] = {"moon"},
         catppuccin = { "mocha", "macchiato" },
         gruvbox = {},
       },
@@ -52,7 +53,7 @@ use {
 
 ## ⚡ Usage
 
-You can use the built-in keymaps, commands, or define your own.
+You can use the commands, and define your own keymaps
 
 ### Suggested keymaps:
 
@@ -87,6 +88,7 @@ You can pass the following options to `setup()`:
 ```lua
 user_colorSchemes = {
   tokyonight = { "storm", "night" }, -- will match e.g. "tokyonight-night"
+  ["rose-pine"] = {"moon"}, -- will match e.g. "rose-pine-moon"
   gruvbox = {},
   catppuccin = { "mocha" }, -- match "catppuccin-mocha"
 }
