@@ -244,4 +244,15 @@ M.setup = function(opts)
   vim.api.nvim_create_user_command("ToggleColorscheme", M.toggle_next, { desc = "Cycle through available colorschemes"})
 end
 
+-- Only expose for testing purposes
+M._test = {
+  set_state = function(state)
+    allColorSchemes = state.allColorSchemes
+    selected_scheme = state.selected_scheme
+  end,
+  find_current_index = find_current_index,
+  set_user_colorschemes = set_user_colorschemes,
+  get_installed_colorschemes = get_installed_colorschemes
+}
+
 return M
