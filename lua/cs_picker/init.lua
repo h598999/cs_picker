@@ -1,9 +1,6 @@
 local M = {}
 
 -- Variables
-local allColorSchemes
-local current_index
-local selected_scheme
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local actions = require("telescope.actions")
@@ -12,34 +9,51 @@ local conf = require("telescope.config").values
 
 -- Local functions
 local get_installed_colorschemes
-local set_colorscheme
+local set_colorscheme_and_save
 local set_user_colorschemes
+local apply_selected_scheme
 local apply_scheme
 local find_current_index
 local find_base
 local find_best_match
 local read_scheme_file
 
--- Default config
+local State = {
+    allColorSchemes = {},
+    current_index = 1,
+    selected_scheme = "default"
+}
+
 local config = {
     scheme_file = vim.fn.stdpath("cache") .. "/last_colorscheme.txt",
     user_colorSchemes = nil,
-    fallback  = "vim"
+    fallback  = "vim",
+    auto_apply = true
 }
 
 -- Private local and helper functions
 
-apply_scheme = function()
+apply_selected_scheme = function()
     vim.schedule(function()
-        pcall(vim.cmd.colorscheme(selected_scheme))
+        local ok, err = pcall(vim.cmd.colorscheme, State.selected_scheme)
+        if not ok then
+            vim.notify("Failed to apply colorschemes from apply_selected_scheme: "..err, vim.log.levels.ERROR)
+        end
     end)
+end
+
+apply_scheme = function(colorscheme)
+    local ok, err = pcall(vim.cmd.colorscheme, colorscheme)
+    if not ok then
+        vim.notify("Failed to apply colorschemes: from apply_scheme"..err, vim.log.levels.ERROR)
+    end
 end
 
 
 find_current_index = function()
     local i = 1
-    for idx, val in ipairs(allColorSchemes) do
-        if val == selected_scheme then
+    for idx, val in ipairs(State.allColorSchemes) do
+        if val == State.selected_scheme then
             i = idx
             break
         end
@@ -139,20 +153,26 @@ find_best_match = function(base, variant, installed)
     return nil
 end
 
-set_colorscheme = function(name)
-    selected_scheme = name
-    vim.cmd.colorscheme(name)
-    vim.fn.writefile({ name }, config.scheme_file)
+local function save_scheme(colorscheme)
+    local ok, err = pcall(vim.fn.writefile, { colorscheme }, config.scheme_file)
+    if not ok then
+        vim.notify("Failed to save colorscheme to file: "..err, vim.log.levels.ERROR)
+    end
+end
+
+set_colorscheme_and_save = function(colorscheme)
+    State.selected_scheme = colorscheme
+    apply_scheme(colorscheme)
+    save_scheme(colorscheme)
 end
 
 
 -- Public API
 M.pick_colorscheme = function()
-    local original_scheme = vim.g.colors_name or "default"
     pickers.new({}, {
         prompt_title = "Select Colorscheme",
         finder = finders.new_table {
-            results = allColorSchemes,
+            results = State.allColorSchemes,
             entry_maker = function(name)
                 return {
                     value = name,
@@ -170,7 +190,7 @@ M.pick_colorscheme = function()
             timer:start(100,100, vim.schedule_wrap(function()
                 local entry = action_state.get_selected_entry()
                 if entry and entry.value and entry.value ~= preview_applied then
-                    pcall(vim.cmd.colorscheme, entry.value)
+                    apply_scheme(entry.value)
                     preview_applied = entry.value
                 end
             end))
@@ -184,7 +204,7 @@ M.pick_colorscheme = function()
                 close_and_restore()
                 local selection = action_state.get_selected_entry()
                 if selection and selection.value then
-                    set_colorscheme(selection.value)
+                    set_colorscheme_and_save(selection.value)
                 end
             end)
 
@@ -192,18 +212,18 @@ M.pick_colorscheme = function()
                 close_and_restore()
                 local selection = action_state.get_selected_entry()
                 if selection and selection.value then
-                    set_colorscheme(selection.value)
+                    set_colorscheme_and_save(selection.value)
                 end
             end)
 
             map("i", "<Esc>", function()
                 actions.close(prompt_bufnr)
-                pcall(vim.cmd.colorscheme, original_scheme)
+                apply_selected_scheme()
             end)
 
             map("n", "<Esc>", function()
                 actions.close(prompt_bufnr)
-                pcall(vim.cmd.colorscheme, original_scheme)
+                apply_selected_scheme()
             end)
 
             return true
@@ -213,46 +233,66 @@ end
 
 
 M.toggle_next = function()
-    if not allColorSchemes or #allColorSchemes == 0 then
+    if not State.allColorSchemes or #State.allColorSchemes == 0 then
         vim.notify("No colorschemes loaded. Did you call setup()?", vim.log.levels.ERROR)
         return
     end
-    current_index = (current_index % #allColorSchemes) + 1
-    set_colorscheme(allColorSchemes[current_index])
-    print("Colorscheme: " .. allColorSchemes[current_index])
+    State.current_index = (State.current_index % #State.allColorSchemes) + 1
+    set_colorscheme_and_save(State.allColorSchemes[State.current_index])
+    print("Colorscheme: " .. State.allColorSchemes[State.current_index])
 end
 
-M.setup = function(opts)
+local function configure(opts)
   config = vim.tbl_extend("force", config, opts or {})
+end
+
+local function initialize()
+  local function init()
+    if config.user_colorSchemes and not vim.tbl_isempty(config.user_colorSchemes) then
+      State.allColorSchemes = set_user_colorschemes(config.user_colorSchemes)
+    else
+      State.allColorSchemes = get_installed_colorschemes()
+    end
+    State.selected_scheme = read_scheme_file(config.scheme_file, config.fallback)
+    apply_selected_scheme()
+    State.current_index = find_current_index()
+  end
 
   local has_lazy = vim.fn.exists("#User#LazyDone") == 1
   vim.api.nvim_create_autocmd(has_lazy and "User" or "VimEnter", {
-      pattern = has_lazy and "LazyDone" or nil,
-      once = true,
-      callback = function()
-          if config.user_colorSchemes and not vim.tbl_isempty(config.user_colorSchemes) then
-              allColorSchemes = set_user_colorschemes(config.user_colorSchemes)
-          else
-              allColorSchemes = get_installed_colorschemes()
-          end
-          selected_scheme = read_scheme_file(config.scheme_file,config.fallback)
-          apply_scheme()
-          current_index = find_current_index()
+    pattern = has_lazy and "LazyDone" or nil,
+    once = true,
+    callback = function()
+      if config.auto_apply then
+        init()
       end
+    end,
   })
-  vim.api.nvim_create_user_command("PickColorscheme", M.pick_colorscheme, { desc = "Telescope-based colorscheme picker"})
-  vim.api.nvim_create_user_command("ToggleColorscheme", M.toggle_next, { desc = "Cycle through available colorschemes"})
+
+  vim.api.nvim_create_user_command("PickColorscheme", M.pick_colorscheme, { desc = "Telescope-based colorscheme picker" })
+  vim.api.nvim_create_user_command("ToggleColorscheme", M.toggle_next, { desc = "Cycle through available colorschemes" })
 end
 
--- Only expose for testing purposes
-M._test = {
-  set_state = function(state)
-    allColorSchemes = state.allColorSchemes
-    selected_scheme = state.selected_scheme
-  end,
-  find_current_index = find_current_index,
-  set_user_colorschemes = set_user_colorschemes,
-  get_installed_colorschemes = get_installed_colorschemes
-}
+M.setup = function(opts)
+  configure(opts)
+  initialize()
+end
+
+M._state = State
+
+function M.get_state()
+    return State
+end
+
+function M.set_state(new_state)
+    State.allColorSchemes = new_state.allColorSchemes or {}
+    State.current_index = new_state.current_index or 1
+    State.selected_scheme = new_state.selected_scheme or "default"
+end
+
+function M.reset()
+    M.set_state({})
+    configure({})
+end
 
 return M
