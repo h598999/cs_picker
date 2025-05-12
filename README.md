@@ -20,11 +20,11 @@ Supports live preview, persistent scheme saving, and toggling between favorite s
 
 ```lua
 {
-  "yourgithub/colorscheme-picker.nvim",
+  "h598999/cs_picker.nvim",
   dependencies = { "nvim-telescope/telescope.nvim" },
   event = "VeryLazy",
   config = function()
-    require("colorscheme_picker").setup({
+    require("cs_picker").setup({
       -- Optional: specify preferred schemes
       user_colorSchemes = {
         tokyonight = { "night", "storm" },
@@ -41,10 +41,10 @@ Supports live preview, persistent scheme saving, and toggling between favorite s
 
 ```lua
 use {
-  "yourgithub/colorscheme-picker.nvim",
+  "h598999/cs_picker.nvim",
   requires = { "nvim-telescope/telescope.nvim" },
   config = function()
-    require("colorscheme_picker").setup()
+    require("cs_picker").setup()
   end
 }
 ```
@@ -58,8 +58,8 @@ You can use the commands, and define your own keymaps
 ### Suggested keymaps:
 
 ```lua
-vim.keymap.set("n", "<leader>fs", require("colorscheme_picker").pick_colorscheme, { desc = "Pick colorscheme" })
-vim.keymap.set("n", "<leader>cs", require("colorscheme_picker").toggle_next, { desc = "Toggle colorscheme" })
+vim.keymap.set("n", "<leader>fs", require("cs_picker").pick_colorscheme, { desc = "Pick colorscheme" })
+vim.keymap.set("n", "<leader>cs", require("cs_picker").toggle_next, { desc = "Toggle colorscheme" })
 ```
 
 ### Available commands:

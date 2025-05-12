@@ -35,18 +35,47 @@ local config = {
 
 apply_selected_scheme = function()
     vim.schedule(function()
-        local ok, err = pcall(vim.cmd.colorscheme, State.selected_scheme)
-        if not ok then
-            vim.notify("Failed to apply colorschemes from apply_selected_scheme: "..err, vim.log.levels.ERROR)
-        end
+        -- local ok, err = pcall(vim.cmd.colorscheme, State.selected_scheme)
+        -- if not ok then
+        --     vim.notify("Failed to apply colorschemes from apply_selected_scheme: "..err, vim.log.levels.ERROR)
+        -- end
+        apply_scheme(State.selected_scheme)
     end)
 end
 
+-- @param colorscheme string
 apply_scheme = function(colorscheme)
     local ok, err = pcall(vim.cmd.colorscheme, colorscheme)
     if not ok then
         vim.notify("Failed to apply colorschemes: from apply_scheme"..err, vim.log.levels.ERROR)
     end
+    vim.api.nvim_set_hl(0, "Normal", { bg = "none" })         -- main text area
+    vim.api.nvim_set_hl(0, "NormalNC", { bg = "none" })       -- unfocused windows
+    vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })    -- floating windows
+    vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })     -- gutter
+    vim.api.nvim_set_hl(0, "EndOfBuffer", { bg = "none" })    -- ~ lines
+
+    -- Make completion and documentation window backgrounds transparent
+    vim.api.nvim_set_hl(0, "Pmenu", { bg = "none" })          -- Completion menu
+    vim.api.nvim_set_hl(0, "PmenuSel", { bg = "#333333" })    -- Selected item
+    vim.api.nvim_set_hl(0, "PmenuThumb", { bg = "#555555" })  -- Scrollbar
+    vim.api.nvim_set_hl(0, "PmenuSbar", { bg = "none" })      -- Scrollbar background
+    vim.api.nvim_set_hl(0, "CmpDocumentation", { bg = "none" }) -- Doc window
+
+    -- Item abbreviation (main text)
+    vim.api.nvim_set_hl(0, "CmpItemAbbr",         { fg = "#cdd6f4", bg = "none" })
+    vim.api.nvim_set_hl(0, "CmpItemAbbrMatch",    { fg = "#89b4fa", bg = "none", bold = true })  -- matching part
+    vim.api.nvim_set_hl(0, "CmpItemAbbrMatchFuzzy", { fg = "#94e2d5", bg = "none", italic = true })
+
+    -- Item kind (Function, Variable, etc.)
+    vim.api.nvim_set_hl(0, "CmpItemKind",         { fg = "#fab387", bg = "none" })
+
+    -- Menu source label ([LSP], [Buffer], etc.)
+    vim.api.nvim_set_hl(0, "CmpItemMenu",         { fg = "#7f849c", bg = "none", italic = true })
+
+    -- Border for floating windows (optional)
+    vim.api.nvim_set_hl(0, "FloatBorder",         { fg = "#89b4fa", bg = "#1e1e2e" })
+    vim.api.nvim_set_hl(0, "NormalFloat",         { bg = "#1e1e2e" })
 end
 
 
@@ -217,12 +246,12 @@ M.pick_colorscheme = function()
             end)
 
             map("i", "<Esc>", function()
-                actions.close(prompt_bufnr)
+                close_and_restore()
                 apply_selected_scheme()
             end)
 
             map("n", "<Esc>", function()
-                actions.close(prompt_bufnr)
+                close_and_restore()
                 apply_selected_scheme()
             end)
 
@@ -246,17 +275,19 @@ local function configure(opts)
   config = vim.tbl_extend("force", config, opts or {})
 end
 
-local function initialize()
-  local function init()
+local function _init()
     if config.user_colorSchemes and not vim.tbl_isempty(config.user_colorSchemes) then
-      State.allColorSchemes = set_user_colorschemes(config.user_colorSchemes)
+        State.allColorSchemes = set_user_colorschemes(config.user_colorSchemes)
     else
-      State.allColorSchemes = get_installed_colorschemes()
+        State.allColorSchemes = get_installed_colorschemes()
     end
+    table.sort(State.allColorSchemes)
     State.selected_scheme = read_scheme_file(config.scheme_file, config.fallback)
     apply_selected_scheme()
     State.current_index = find_current_index()
-  end
+end
+
+local function initialize()
 
   local has_lazy = vim.fn.exists("#User#LazyDone") == 1
   vim.api.nvim_create_autocmd(has_lazy and "User" or "VimEnter", {
@@ -264,7 +295,7 @@ local function initialize()
     once = true,
     callback = function()
       if config.auto_apply then
-        init()
+        _init()
       end
     end,
   })
@@ -289,6 +320,8 @@ function M.set_state(new_state)
     State.current_index = new_state.current_index or 1
     State.selected_scheme = new_state.selected_scheme or "default"
 end
+
+M._init = _init
 
 function M.reset()
     M.set_state({})
