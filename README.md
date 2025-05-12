@@ -20,7 +20,7 @@ Supports live preview, persistent scheme saving, and toggling between favorite s
 
 ```lua
 {
-  "h598999/cs_picker.nvim",
+  "h598999/cs_picker",
   dependencies = { "nvim-telescope/telescope.nvim" },
   event = "VeryLazy",
   lazy = false,
@@ -43,7 +43,7 @@ Supports live preview, persistent scheme saving, and toggling between favorite s
 
 ```lua
 use {
-  "h598999/cs_picker.nvim",
+  "h598999/cs_picker",
   lazy = false,
   priority = 1000, -- make sure it loads early
   requires = { "nvim-telescope/telescope.nvim" },
