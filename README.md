@@ -23,6 +23,8 @@ Supports live preview, persistent scheme saving, and toggling between favorite s
   "h598999/cs_picker.nvim",
   dependencies = { "nvim-telescope/telescope.nvim" },
   event = "VeryLazy",
+  lazy = false,
+  priority = 1000, -- make sure it loads early
   config = function()
     require("cs_picker").setup({
       -- Optional: specify preferred schemes
@@ -42,6 +44,8 @@ Supports live preview, persistent scheme saving, and toggling between favorite s
 ```lua
 use {
   "h598999/cs_picker.nvim",
+  lazy = false,
+  priority = 1000, -- make sure it loads early
   requires = { "nvim-telescope/telescope.nvim" },
   config = function()
     require("cs_picker").setup()
