@@ -195,6 +195,11 @@ set_colorscheme_and_save = function(colorscheme)
     save_scheme(colorscheme)
 end
 
+M.get_current_colorscheme = function()
+    local selected = read_scheme_file(config.scheme_file, config.fallback)
+    vim.print("Current scheme: ", selected)
+end
+
 
 -- Public API
 M.pick_colorscheme = function()
