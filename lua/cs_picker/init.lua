@@ -197,7 +197,7 @@ end
 
 M.get_current_colorscheme = function()
     local selected = read_scheme_file(config.scheme_file, config.fallback)
-    vim.print("Current scheme: ", selected)
+    print("Current scheme: ", selected)
 end
 
 
